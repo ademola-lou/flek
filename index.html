@@ -63,7 +63,8 @@
     <canvas id="renderCanvas"></canvas>
     <script>
   var canvas = document.getElementById("renderCanvas");
-  
+  //needed global variable
+  var level = 0
   var createWorld = function () {
     
     this.scene = new BABYLON.Scene(engine);
@@ -87,18 +88,21 @@
     this.light.diffuse = new BABYLON.Color3(2, 2, 2)
 	  this.light.intensity = 0.3;
     
-    /*this.box = BABYLON.Mesh.CreateBox('SkyBox', 1000, scene, false, BABYLON.Mesh.BACKSIDE);
-    this.box.material = new BABYLON.SkyMaterial('sky', scene);
-    this.box.material.inclination = -0.35;
-    this.box.material.rayleigh = 2;*/
-    scene.clearColor = new BABYLON.Color3(.2, .2, .2)
+    this.skysphere = BABYLON.MeshBuilder.CreateSphere("sphere", {diameter: 100, segments: 32}, scene);
+
+    this.skysphere.material = new BABYLON.StandardMaterial("mat", scene)
+    this.skysphere.material.diffuseTexture = new BABYLON.Texture("https://cdn.glitch.com/03c1b291-1ddc-415e-afd8-2c410c525542%2FMaterial__25__background_JPG_002_emissive.jpg?v=1563077337997", scene)
+    this.skysphere.flipFaces()
+   
+    scene.clearColor = new BABYLON.Color3(.0, .0, .0)//.2
     
     var shadowGenerator = new BABYLON.ShadowGenerator(24, this.light);
     shadowGenerator.useExponentialShadowMap = true;
     
     var advancedTexture = BABYLON.GUI.AdvancedDynamicTexture.CreateFullscreenUI("UI");
     
-    window.onload = function(){
+    
+    //window.onload = function(){
        var pipeline = new BABYLON.DefaultRenderingPipeline(
         "default", // The name of the pipeline
         false, // Do you want HDR textures ?
@@ -112,7 +116,7 @@
         pipeline.grain.animated = .0;
 
       
-      
+        FLEK.dynTexture = advancedTexture
         FLEK.initialize(scene)
         FLEK.setClouds(scene)
         FLEK.setRocks(scene)
@@ -123,6 +127,8 @@
         FLEK.setDungs();
         FLEK.guiOptionbt(advancedTexture)
         FLEK.timeLimit(advancedTexture)
+        FLEK.dungsCollected(advancedTexture)
+        FLEK.playSound()
         var playerObject = FLEK.setPlayer(scene)
         camera.parent = playerObject.colld
         this.light.parent = playerObject.colld
@@ -139,14 +145,6 @@
           camera.radius = 56.50111286760352
           playerObject.pT.rotation.y = camera.alpha
         })
-      
-      /*for (var i=0; i < scene.materials.length; i++) {
-            scene.materials[i].emissiveColor = new BABYLON.Color3(.15, .15, .15)
-        }
-
-     var gl = new BABYLON.GlowLayer("glow", scene, { 
-            mainTextureSamples: .02 
-        });*/
      window.addEventListener("keydown", function handleKeyUp(evt) { 
         
       if (evt.keyCode == 87) {
@@ -167,8 +165,7 @@
               FLEK.speed = 0
              }
       })
-    }
-    
+ 
     return scene
     
   }
@@ -181,6 +178,8 @@
     player_eat_threshold: 0,
     time: 60,
     timeDelta: 0,
+    dynTexture: null,
+    pause: false,
     initialize: function(scene){
     this.planet = BABYLON.MeshBuilder.CreateSphere("sphere", {diameter: this.worldRadius*2, segments: 12}, scene);
     this.planet.material = new BABYLON.CellMaterial("mat0", scene)
@@ -437,21 +436,27 @@
     
     setObstacles: function(scene){
       var pole = BABYLON.MeshBuilder.CreateTorus("sphere", {diameter: 30, thickness: 4}, scene);
-          //BABYLON.MeshBuilder.CreateSphere("sphere", {diameter: 10, segments: 2}, scene);
-      //pole.scaling.y = 6
       pole.rotation.x = -Math.PI/2
       pole.rotation.y = Math.PI/2
       this.makeLowpoly(pole, .8)
       pole.material = new BABYLON.CellMaterial("mat2", scene)
       pole.material.diffuseColor = new BABYLON.Color3.FromHexString('#F6AB40')
-
+      this.globalLabel(pole, "Cave")
       pole.position.setFromSphericalCoords(this.worldRadius+3, Math.PI, Math.PI*2, 0);
       pole.physicsImpostor = new BABYLON.PhysicsImpostor(pole, BABYLON.PhysicsImpostor.MeshImpostor, { mass: 0, friction: 10000, damping: 1000000 }, scene);
-
+     
+      this.cave = BABYLON.MeshBuilder.CreatePlane("sphere", {size: 29}, scene);
+      this.cave.rotation.y = Math.PI/2
+      this.cave.isVisible = false
+      this.cave.position.copyFrom(pole.position)
+      this.cave.storage = []
+      this.caveThreshold = 0
     },
     
     updatePlayer: function(camera){
       camera.beta = 0.4110720242219162
+      if(!this.pause){
+      
       this.playerPivot.rotate(BABYLON.Vector3.Cross(new BABYLON.Vector3(Math.cos(-this.playerTransform.rotation.y), 0, Math.sin(-this.playerTransform.rotation.y)), this.playerTransform.position.negate()), this.speed);
 		  this.playerPivot.physicsImpostor.setAngularVelocity(new BABYLON.Vector3(0, 0, 0))
       this.playerPivot.physicsImpostor.setLinearVelocity(new BABYLON.Vector3(0, 0, 0))
@@ -478,7 +483,28 @@
         
         }
       
-                    
+      //this.caveThreshold
+      for(var i = 0; i<this.playersnake_body.length; i++){
+        if(this.cave.intersectsMesh(this.playersnake_body[i])){
+          
+       
+          this.caveThreshold += 1
+          if(this.caveThreshold % 1 == 0){
+            this.pointSound.play()
+            
+                    this.cave.storage.push(this.playersnake_body[i])
+                    this.playersnake_body.splice(i, 1)
+                    }
+                  }else{
+                    this.caveThreshold  = 0
+                  }
+        
+        
+      }
+      
+      for(var i = 0; i<this.cave.storage.length; i++){
+        if(this.cave.storage != undefined)this.cave.storage[i].dispose()
+      }
       var j = 0;
       
       
@@ -514,7 +540,7 @@
                   }
           
         }
-      
+
        var k = 0;
         for(var i = 0; i<this.playersnake_body.length; i++){
                var origin = this.playersnake_body[0]
@@ -555,15 +581,24 @@
       if((this.timeDelta % 60) == 0){
       this.time -= 1
       
-      this.timeCounter.text = "TIME: "+this.time+" sec"
+      this.timeCounter.text = "TIME LIMIT: "+this.time+" sec"
+      if(this.time == 0)FLEK.pause = true, this.optionPanel.isVisible = true;
       }
-      
+      if(this.cave.storage.length == this.dungGoal)FLEK.pause = true, this.optionPanel.isVisible = true, this.timeCounter.text = "Good job!!!", this.opt3.background = "purple", this.opt3.children[1].color = "purple";
+      else if(this.time == 0 && this.cave.storage.length != this.dungGoal) this.timeCounter.text = "Time up!!! :(", this.opt3.background = "purple", this.opt3.children[1].color = "purple";
+        
+      this.dungsCounter.text = "Dungs gathered: "+this.cave.storage.length+" / "+this.dungGoal;
+      var dist = BABYLON.Vector3.Distance(this.enemyTransform.absolutePosition, this.playerTransform.absolutePosition)
+     
       //make sure the enemy moves facing the direction of the player when the angle between them....
       this.dotProduct = BABYLON.Vector3.Dot(this.enemyTransform.calcMovePOV(1, 0, 0), this.enemyTransform.getAbsolutePosition().subtract(this.playerTransform.getAbsolutePosition()));
+      if(dist > 5){
       if (this.dotProduct > 0) {
         this.enemyTransform.rotation.y -= 0.05;
       } else {
         this.enemyTransform.rotation.y += 0.05;
+      }
+      }
       }
     },
     randomNumber: function(min, max){
@@ -576,13 +611,15 @@
     
     },
     guiOptionbt: function(dynTexture){
-        
+            
+            
             var button = BABYLON.GUI.Button.CreateImageOnlyButton("but", "https://cdn.glitch.com/9fc921e3-db5b-4af6-9426-ecd872050c1f%2Fwhite-paint-brush-stroke-2.png?v=1568860181233");
             button.width = 0.2;
             button.height = "40px";
             button.color = "white";
             button.thickness = 0
             button.background = null;
+            button.zIndex = 10
             button.verticalAlignment = BABYLON.GUI.Control.VERTICAL_ALIGNMENT_TOP
             button.horizontalAlignment = BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_LEFT
             dynTexture.addControl(button);   
@@ -594,7 +631,95 @@
             text1.fontFamily = "Chalkduster";
             text1.fontSize = 24;
             button.addControl(text1)  
+      
+             
+            var panel = new BABYLON.GUI.StackPanel();    
+            dynTexture.addControl(panel);   
+            panel.isVisible = false
+            panel.zIndex = 10
+      
+            var optionsButton = new Array(4)
+            var texts = ["resume", "audio on", "easy", "continue"]
+            for(var i = 0; i<optionsButton.length; i++){
+              optionsButton[i] = BABYLON.GUI.Button.CreateImageOnlyButton("but", "https://cdn.glitch.com/9fc921e3-db5b-4af6-9426-ecd872050c1f%2Fwhite-paint-brush-stroke-2.png?v=1568860181233");
+              optionsButton[i].width = 0.2;
+              optionsButton[i].height = "40px";
+              optionsButton[i].thickness = 0
+              optionsButton[i].background = null;
+              
+              panel.addControl(optionsButton[i])
+            }
+            for(var i = 0; i<optionsButton.length; i++){
+            var text1 = new BABYLON.GUI.TextBlock();
+            text1.text = texts[i]
+            text1.color = "gray";
+            text1.fontFamily = "Chalkduster";
+            text1.fontSize = 24;
+            optionsButton[i].addControl(text1) 
             
+            }
+          
+          optionsButton[0].onPointerUpObservable.add(function() {
+            panel.isVisible = false
+            
+            if(FLEK.time > 0)FLEK.pause = false
+          })
+      
+          optionsButton[1].onPointerUpObservable.add(function() {
+            
+            if(optionsButton[1].children[1].text === "audio on"){
+            optionsButton[1].children[1].text = "audio off"
+            FLEK.ambient.stop()
+          }else{
+            optionsButton[1].children[1].text = "audio on"
+            FLEK.ambient.play()
+          } 
+            
+          })
+          
+          optionsButton[2].onPointerUpObservable.add(function() {
+            
+            if(optionsButton[2].children[1].text === "easy"){
+            optionsButton[2].children[1].text = "hard"
+          }else{
+            optionsButton[2].children[1].text = "easy"
+          } 
+            
+          })
+
+          button.onPointerUpObservable.add(function() {
+           FLEK.pause = true
+           panel.isVisible = true  
+            
+          });
+      
+     optionsButton[3].onPointerUpObservable.add(function() {
+      FLEK.pause = false
+      FLEK.time = 60
+      engine.dispose()
+       
+      if(FLEK.cave.storage.length == FLEK.dungGoal)level += 2;
+       
+      engine = new BABYLON.Engine(canvas, false, { preserveDrawingBuffer: true, stencil: true });
+      scene = createWorld()
+      engine.runRenderLoop(function () {
+      if (scene) {
+        scene.render();
+        var fpsLabel = document.getElementById("fpsLabel");
+        fpsLabel.innerHTML = engine.getFps().toFixed() + " fps";
+            }
+      });
+       
+       })
+      
+          this.optionPanel = panel
+          this.opt3 = optionsButton[3]
+    },
+    playSound: function(){
+       this.ambient = new BABYLON.Sound("Violons", "https://cdn.glitch.com/d5fc0468-6095-472d-b1b8-cb9cdf6fe6cf%2Fambient.wav", scene, null, { loop: true, autoplay: true });
+       this.pointSound = new BABYLON.Sound("gunshot", "https://cdn.glitch.com/d5fc0468-6095-472d-b1b8-cb9cdf6fe6cf%2Fpoints.wav", scene);
+	       
+      
     },
     timeLimit: function(dynTexture){
       
@@ -609,23 +734,43 @@
             
       
             var text1 = new BABYLON.GUI.TextBlock();
-            text1.text = "TIME: 60 sec";
+            text1.text = "TIME LIMIT: 60 sec";
             text1.color = "gray";
             text1.fontFamily = "Chalkduster";
             text1.fontSize = 24;
             rect1.addControl(text1)
             this.timeCounter = text1
     },
+    dungsCollected: function(dynTexture){
+      var rect1 = new BABYLON.GUI.Rectangle();
+      rect1.width = .5
+      rect1.height = .1
+      rect1.thickness = 0;
+      rect1.background = null;
+      rect1.verticalAlignment = BABYLON.GUI.Control.VERTICAL_ALIGNMENT_BOTTOM
+      rect1.horizontalAlignment = BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_LEFT
+      dynTexture.addControl(rect1)
+            
+      
+      var text1 = new BABYLON.GUI.TextBlock();
+      text1.text = "Dungs gathered: "+this.cave.storage.length+" / "+FLEK.dungs.length;
+      text1.color = "gray";
+      text1.fontFamily = "Chalkduster";
+      text1.fontSize = 24;
+      rect1.addControl(text1)
+      this.dungGoal = this.dungs.length - 5 + level;
+      this.dungsCounter = text1
+    },
+    globalLabel: function(object, text){
+    var label = new BABYLON.GUI.TextBlock();
+    label.color = "yellow"
+    label.text = text
+    this.dynTexture.addControl(label);
+    label.linkWithMesh(object); 
+      
+    },
     scoreLabel: function(dynTexture, player, type){
-    /*var rect1 = new BABYLON.GUI.Rectangle();
-    rect1.width = 0.08;
-    rect1.height = "40px";
-    rect1.color = "Orange";
-    rect1.thickness = 1;
-    if(type === "player")rect1.background = "green";
-    if(type === "mizo")rect1.background = "yellow";
-    dynTexture.addControl(rect1);
-*/
+    
     var label = new BABYLON.GUI.TextBlock();
     label.color = "yellow"
     if(type === "player")label.text = "Dungs: "+this.playersnake_body.length, this.playerLabel = label;
