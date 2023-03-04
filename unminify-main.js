@@ -1,9 +1,10 @@
+(async () =>{
+    await Ammo();
 var canvas = document.getElementById("renderCanvas"),
     level = 0,
     cacheTime = 0;
 (console.warn = console.error = () => {}), console.log("%cPLAY FLEK %cGAME", "background: red; color: yellow; font-size: x-large", "background: blue; color: yellow; font-size: x-large");
-var createWorld = async function () {
-        await Ammo();
+var createWorld = function () {
         this.scene = new BABYLON.Scene(engine);
         var e = this.scene;
         e.enablePhysics(new BABYLON.Vector3(0, 0, 0), new BABYLON.AmmoJSPlugin()),
@@ -20,12 +21,14 @@ var createWorld = async function () {
             (this.light.intensity = 0.3),
             (this.skysphere = BABYLON.MeshBuilder.CreateSphere("sphere", { diameter: 100, segments: 32 }, e)),
             (this.skysphere.material = new BABYLON.StandardMaterial("mat", e)),
-            (this.skysphere.material.diffuseTexture = new BABYLON.Texture("https://cdn.glitch.com/03c1b291-1ddc-415e-afd8-2c410c525542%2FMaterial__25__background_JPG_002_emissive.jpg?v=1563077337997", e)),
+            (this.skysphere.material.diffuseTexture = new BABYLON.Texture("assets/images/sky2.jpg", e)),
             this.skysphere.flipFaces(),
             (e.clearColor = new BABYLON.Color3(0, 0, 0)),
             (new BABYLON.ShadowGenerator(24, this.light).useExponentialShadowMap = !0);
         var t = BABYLON.GUI.AdvancedDynamicTexture.CreateFullscreenUI("UI"),
             o = new BABYLON.DefaultRenderingPipeline("default", !1, e, [camera]);
+            o.chromaticAberrationEnabled = !0;
+            o.chromaticAberration.aberrationAmount = 10;
         (o.grainEnabled = !0),
             (o.grain.intensity = 10),
             (o.grain.animated = 0),
@@ -323,7 +326,7 @@ var createWorld = async function () {
                 t.addControl(n);
             var o = new BABYLON.GUI.StackPanel();
             e.addControl(o), (o.zIndex = 10), cacheTime <= 0 ? ((o.isVisible = !0), (FLEK.pause = !0)) : ((o.isVisible = !1), (FLEK.pause = !1));
-            for (var i = new Array(4), s = ["resume", "audio on", "easy", "continue"], a = 0; a < i.length; a++)
+            for (var i = new Array(4), s = ["resume", "audio on", "easy", "new game"], a = 0; a < i.length; a++)
                 (i[a] = BABYLON.GUI.Button.CreateImageOnlyButton("but", "https://cdn.glitch.com/9fc921e3-db5b-4af6-9426-ecd872050c1f%2Fwhite-paint-brush-stroke-2.png?v=1568860181233")),
                     (i[a].width = 0.2),
                     (i[a].height = "40px"),
@@ -346,7 +349,7 @@ var createWorld = async function () {
                 t.onPointerUpObservable.add(function () {
                     (FLEK.pause = !0), (o.isVisible = !0);
                 }),
-                i[3].onPointerUpObservable.add(function () {
+                i[3].onPointerUpObservable.add(async function () {
                     (cacheTime += 1),
                         (FLEK.pause = !1),
                         (FLEK.time = 60),
@@ -443,11 +446,12 @@ BABYLON.Vector3.prototype.setFromSphericalCoords = function (e, t, o, i) {
         a = Math.sin(t) * e;
     return (this.x = a * Math.sin(o) + s), (this.y = Math.cos(t) * e + s), (this.z = a * Math.cos(o) + s), this;
 };
-var engine = new BABYLON.Engine(canvas, !1, { preserveDrawingBuffer: !0, stencil: !0 }),
-    scene = createWorld();
+var engine = new BABYLON.Engine(canvas, !1, { preserveDrawingBuffer: !0, stencil: !0 });
+scene = createWorld();
 engine.runRenderLoop(function () {
     scene && (scene.render(), (document.getElementById("fpsLabel").innerHTML = engine.getFps().toFixed() + " fps"));
 }),
-    window.addEventListener("resize", function () {
-        engine.resize();
-    });
+window.addEventListener("resize", function () {
+    engine.resize();
+});
+})();
