@@ -138,11 +138,12 @@ var createWorld = function () {
             new BABYLON.Mesh.MergeMeshes(e, !0, !0, void 0, !1, !0);
         },
         setDungs: function () {
-            for (var e = new Array(30), t = new BABYLON.CellMaterial("mat0", scene), o = 0; o < e.length; o++) {
-                (e[o] = BABYLON.MeshBuilder.CreateSphere("sc", { diameter: 5, segments: 5 }, scene)), this.makeLowpoly(e[o], 3), (e[o].material = t);
+
+            for (var e = new Array(30), t = new BABYLON.CellMaterial("mat0", window.scene), o = 0; o < e.length; o++) {
+                (e[o] = BABYLON.MeshBuilder.CreateSphere("sc", { diameter: 5, segments: 5 }, window.scene)), this.makeLowpoly(e[o], 3), (e[o].material = t);
                 let i = Math.random() * Math.PI * 2,
                     s = Math.random() * Math.PI;
-                e[o].position.setFromSphericalCoords(this.worldRadius + 0.3, s, i, 0), e[o].lookAt(this.planet.position), (e[o].rotationQuaternion = new BABYLON.Vector4(0, 0, 0, 1));
+                e[o].position.setFromSphericalCoords(this.worldRadius + 0.3, s, i, 0), e[o].lookAt(this.planet.position), (e[o].rotationQuaternion = new BABYLON.Quaternion(0, 0, 0, 1));
             }
             this.dungs = e;
         },
@@ -199,12 +200,12 @@ var createWorld = function () {
         setMizoSnake: function (e, t) {
             (this.mizosnake_head = BABYLON.MeshBuilder.CreateBox("sc", { size: 2 }, t)),
                 this.mizosnake_head.setPivotMatrix(BABYLON.Matrix.Translation(0, 0, 0)),
-                (this.mizosnake_head.rotationQuaternion = new BABYLON.Vector4(0, 0, 0, 1)),
+                (this.mizosnake_head.rotationQuaternion = new BABYLON.Quaternion(0, 0, 0, 1)),
                 (this.mizosnake_head.visibility = 0),
                 (this.mizosnake_body = []),
                 (this.playersnake_head = BABYLON.MeshBuilder.CreateBox("sc", { size: 2 }, t)),
                 this.playersnake_head.setPivotMatrix(BABYLON.Matrix.Translation(0, 0, 0)),
-                (this.playersnake_head.rotationQuaternion = new BABYLON.Vector4(0, 0, 0, 1)),
+                (this.playersnake_head.rotationQuaternion = new BABYLON.Quaternion(0, 0, 0, 1)),
                 (this.playersnake_head.visibility = 0),
                 (this.playersnake_body = []);
             for (var o = new BABYLON.CellMaterial("mat0", t), i = 0; i < e; i++)
@@ -212,7 +213,7 @@ var createWorld = function () {
                     (this.mizosnake_bodypart.position.x = (i / 4) * 50),
                     this.makeLowpoly(this.mizosnake_bodypart, 3),
                     (this.mizosnake_bodypart.material = o),
-                    (this.mizosnake_bodypart.rotationQuaternion = new BABYLON.Vector4(0, 0, 0, 1)),
+                    (this.mizosnake_bodypart.rotationQuaternion = new BABYLON.Quaternion(0, 0, 0, 1)),
                     i < Math.round(0.5 * e) ? this.mizosnake_body.push(this.mizosnake_bodypart) : this.playersnake_body.push(this.mizosnake_bodypart);
         },
         setObstacles: function (e) {
