@@ -148,11 +148,11 @@ var createWorld = function () {
             this.dungs = e;
         },
         loadPlayerAnimated: function (e, t) {
-            BABYLON.SceneLoader.ImportMesh("", "https://cdn.glitch.com/", "3b0cf707-4643-40ad-886b-220b8a3f7c44%2Fzombie.gltf?v=1572402949695", scene, (o, i, s, a) => {
-                (o[0].parent = e), o[0].rotate(BABYLON.Axis.Z, -1.45, BABYLON.Space.LOCAL), o[0].rotate(BABYLON.Axis.Y, 1.45, BABYLON.Space.LOCAL);
-                (e.visibility = 0), o[0].scaling.set(0.06, 0.06, 0.06), t.addShadowCaster(o[0]), null != a[0] && (a[0].stop(), a[0].start(!0, 1, 0.05, 0.8));
-                for (var n = 0; n < o.length; n++) o[n].material && (o[n].material.albedoColor = new BABYLON.Color3(o[n].material.albedoColor.r, o[n].material.albedoColor.g, o[n].material.albedoColor.b).scale(6));
-            });
+            // BABYLON.SceneLoader.ImportMesh("", "https://cdn.glitch.com/", "3b0cf707-4643-40ad-886b-220b8a3f7c44%2Fzombie.gltf?v=1572402949695", scene, (o, i, s, a) => {
+            //     (o[0].parent = e), o[0].rotate(BABYLON.Axis.Z, -1.45, BABYLON.Space.LOCAL), o[0].rotate(BABYLON.Axis.Y, 1.45, BABYLON.Space.LOCAL);
+            //     (e.visibility = 0), o[0].scaling.set(0.06, 0.06, 0.06), t.addShadowCaster(o[0]), null != a[0] && (a[0].stop(), a[0].start(!0, 1, 0.05, 0.8));
+            //     for (var n = 0; n < o.length; n++) o[n].material && (o[n].material.albedoColor = new BABYLON.Color3(o[n].material.albedoColor.r, o[n].material.albedoColor.g, o[n].material.albedoColor.b).scale(6));
+            // });
         },
         setPlayer: function (e) {
             var t = new BABYLON.Mesh("playerTransform", e),
